@@ -112,7 +112,6 @@ const TaxIntakeSystem = () => {
       const submissionData = { ...formData, documents: uploadedFiles, submittedAt: new Date().toISOString() };
       await fetch(APPS_SCRIPT_URL, {
         method: "POST",
-        mode: "no-cors",
         body: JSON.stringify(submissionData),
       });
       setSubmitted(true);
