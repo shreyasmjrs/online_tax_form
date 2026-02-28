@@ -1,7 +1,22 @@
 import React, { useState } from "react";
-import { Send, CheckCircle, Upload, FileText, Trash2 } from "lucide-react";
+import { Send, CheckCircle, Upload, FileText, Trash2, AlertCircle } from "lucide-react";
 
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw1-HZnFEVkzCyIm9htYcR3W00o78woSQVCKNDhQG72vntv7fJnnbtIwKXLMbCi9e9f/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQ8BVOexUwmyq3-Bdd1rbKFfYVk4KskR4IkoBUlI_SQ6qPhIljs_YfsI1geRhkeP01/exec";
+
+const PROVINCES = [
+  "Alberta", "British Columbia", "Manitoba", "New Brunswick",
+  "Newfoundland and Labrador", "Northwest Territories", "Nova Scotia",
+  "Nunavut", "Ontario", "Prince Edward Island", "Quebec",
+  "Saskatchewan", "Yukon"
+];
+
+const INCOME_DOCUMENT_MAP: Record<string, string> = {
+  incomeT4: "T4 Slip (Employment Income)",
+  incomeT4A: "T4A Slip (Self-Employed / Gig Work)",
+  incomeT4E: "T4E Slip (Employment Insurance Benefits)",
+  incomeT5: "T5 or T3 Slip (Investment / Interest Income)",
+  incomeT2202: "T2202 Form (Tuition / Education)",
+};
 
 const TaxIntakeSystem = () => {
   const [submitted, setSubmitted] = useState(false);
@@ -12,7 +27,8 @@ const TaxIntakeSystem = () => {
     email1: "", phone1: "",
     sin1: "", dob1: "", citizen1: "", maritalStatus: "",
     name2: "", sin2: "", dob2: "", citizen2: "",
-    marriedIn2025: "", marriageDate: "", address: "",
+    marriedIn2025: "", marriageDate: "",
+    aptNo: "", streetNo: "", city: "", province: "", postalCode: "",
     dependents: [] as any[],
     incomeT4: false, incomeT4A: false, incomeT4E: false, incomeT5: false,
     incomeT2202: false, incomeOther: false, incomeOtherText: "",
@@ -37,6 +53,16 @@ const TaxIntakeSystem = () => {
 
   const handleSINChange = (field: string, value: string) =>
     handleChange(field, value.replace(/\D/g, "").slice(0, 9));
+
+  const handlePostalCodeChange = (value: string) => {
+    const clean = value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    let formatted = clean;
+    if (clean.length > 3) formatted = clean.slice(0, 3) + " " + clean.slice(3, 6);
+    handleChange("postalCode", formatted);
+  };
+
+  const isValidPostalCode = (code: string) =>
+    /^[A-Za-z]\d[A-Za-z] \d[A-Za-z]\d$/.test(code);
 
   const handleMaritalStatusChange = (value: string) => {
     setFormData(prev => ({
@@ -96,14 +122,36 @@ const TaxIntakeSystem = () => {
   const removeFile = (index: number) =>
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
 
+  // Get required documents based on selected income sources
+  const getRequiredDocuments = () => {
+    const docs: string[] = [];
+    Object.entries(INCOME_DOCUMENT_MAP).forEach(([key, label]) => {
+      if ((formData as any)[key]) docs.push(label);
+    });
+    if (formData.incomeOther && formData.incomeOtherText)
+      docs.push(`Other: ${formData.incomeOtherText}`);
+    return docs;
+  };
+
+  const fullAddress = [
+    formData.aptNo ? `Apt ${formData.aptNo}` : "",
+    formData.streetNo,
+    formData.city,
+    formData.province,
+    formData.postalCode
+  ].filter(Boolean).join(", ");
+
   const handleSubmit = async () => {
     if (!formData.firstName1 || !formData.lastName1 || !formData.email1 || !formData.phone1 ||
       !formData.sin1 || !formData.dob1 || !formData.citizen1 ||
-      !formData.maritalStatus || !formData.address || !formData.hasSelfEmployed ||
-      !formData.authorized || !formData.signature || !formData.signatureDate) {
+      !formData.maritalStatus || !formData.streetNo || !formData.city ||
+      !formData.province || !formData.postalCode ||
+      !formData.hasSelfEmployed || !formData.authorized ||
+      !formData.signature || !formData.signatureDate) {
       alert("Please fill all required fields marked with *"); return;
     }
     if (formData.sin1.length !== 9) { alert("SIN must be exactly 9 digits."); return; }
+    if (!isValidPostalCode(formData.postalCode)) { alert("Please enter a valid Canadian postal code (e.g. M5V 3L9)."); return; }
     if (needsSpouseInfo() && (!formData.name2 || !formData.sin2 || !formData.dob2 || !formData.citizen2)) {
       alert("Please fill all spouse information fields"); return;
     }
@@ -112,7 +160,12 @@ const TaxIntakeSystem = () => {
     }
     setLoading(true);
     try {
-      const submissionData = { ...formData, documents: uploadedFiles, submittedAt: new Date().toISOString() };
+      const submissionData = {
+        ...formData,
+        fullAddress,
+        documents: uploadedFiles,
+        submittedAt: new Date().toISOString()
+      };
       await fetch(APPS_SCRIPT_URL, {
         method: "POST",
         mode: "no-cors",
@@ -146,6 +199,8 @@ const TaxIntakeSystem = () => {
       </div>
     </div>
   );
+
+  const requiredDocs = getRequiredDocuments();
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -265,7 +320,6 @@ const TaxIntakeSystem = () => {
                       <input type="date" value={formData.marriageDate}
                         onChange={e => handleChange("marriageDate", e.target.value)}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-500" />
-                      <p className="text-xs text-gray-600 mt-1">Please provide the exact date you got married or entered common-law in 2025</p>
                     </div>
                   )}
                   <div className="bg-blue-50 p-4 rounded-lg space-y-4 border-2 border-blue-200">
@@ -308,22 +362,65 @@ const TaxIntakeSystem = () => {
                 </>
               )}
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Current Address *</label>
-                <textarea rows={2} placeholder="Street, City, Province, Postal Code"
-                  value={formData.address}
-                  onChange={e => handleChange("address", e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+              {/* Address */}
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="font-semibold text-gray-700 mb-3">Current Address</h3>
+                <div className="space-y-3">
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Apt / Unit No.</label>
+                      <input type="text" placeholder="e.g. 204"
+                        value={formData.aptNo}
+                        onChange={e => handleChange("aptNo", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Street No. & Street Name *</label>
+                      <input type="text" placeholder="e.g. 123 Main Street"
+                        value={formData.streetNo}
+                        onChange={e => handleChange("streetNo", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">City *</label>
+                      <input type="text" placeholder="e.g. Toronto"
+                        value={formData.city}
+                        onChange={e => handleChange("city", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Province *</label>
+                      <select value={formData.province}
+                        onChange={e => handleChange("province", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">Select...</option>
+                        {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Postal Code *</label>
+                      <input type="text" placeholder="M5V 3L9" maxLength={7}
+                        value={formData.postalCode}
+                        onChange={e => handlePostalCodeChange(e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${formData.postalCode && !isValidPostalCode(formData.postalCode) ? "border-red-400" : ""}`} />
+                      {formData.postalCode && !isValidPostalCode(formData.postalCode) && (
+                        <p className="text-red-500 text-xs mt-1">Format must be A1B 2C3</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Dependents */}
               <div className="mt-6 pt-6 border-t-2 border-gray-200">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-semibold text-gray-800">👶 Dependents (Children or other dependents)</h3>
+                  <h3 className="font-semibold text-gray-800">👶 Dependents</h3>
                   <button onClick={addDependent} type="button" className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700">+ Add Dependent</button>
                 </div>
                 {formData.dependents.length === 0 ? (
-                  <p className="text-sm text-gray-500 italic">No dependents added. Click Add Dependent if you have children or other dependents.</p>
+                  <p className="text-sm text-gray-500 italic">No dependents added.</p>
                 ) : (
                   <div className="space-y-4">
                     {formData.dependents.map((dep, index) => (
@@ -340,12 +437,12 @@ const TaxIntakeSystem = () => {
                               className="w-full px-3 py-2 border rounded-lg" />
                           </div>
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">Social Insurance Number</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">SIN</label>
                             <input type="text" placeholder="123456789" maxLength={9}
                               value={dep.sin}
                               onChange={e => updateDependent(dep.id, "sin", e.target.value)}
                               className="w-full px-3 py-2 border rounded-lg" />
-                            {dep.sin && dep.sin.length !== 9 && <p className="text-red-500 text-xs mt-1">SIN must be exactly 9 digits</p>}
+                            {dep.sin && dep.sin.length !== 9 && <p className="text-red-500 text-xs mt-1">SIN must be 9 digits</p>}
                           </div>
                         </div>
                         <div className="grid md:grid-cols-2 gap-4 mt-4">
@@ -507,19 +604,18 @@ const TaxIntakeSystem = () => {
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h3 className="font-semibold text-gray-800 text-lg">💝 Donations to Canadian Charities</h3>
-                    <p className="text-sm text-gray-600 mt-1">Add all charitable donations you made in 2025</p>
+                    <p className="text-sm text-gray-600 mt-1">Add all charitable donations made in 2025</p>
                   </div>
                   <button onClick={addDonation} type="button" className="bg-orange-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-700">+ Add Donation</button>
                 </div>
                 {formData.donations.length === 0 ? (
                   <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-6 text-center">
                     <p className="text-sm text-gray-600">No donations added yet.</p>
-                    <p className="text-xs text-gray-500 mt-1">Click Add Donation above if you made charitable donations in 2025.</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {formData.donations.map((donation, index) => (
-                      <div key={donation.id} className="bg-orange-50 p-4 rounded-lg border-2 border-orange-200 shadow-sm">
+                      <div key={donation.id} className="bg-orange-50 p-4 rounded-lg border-2 border-orange-200">
                         <div className="flex justify-between items-center mb-3">
                           <h4 className="font-semibold text-gray-700">Donation {index + 1}</h4>
                           <button onClick={() => removeDonation(donation.id)} type="button" className="text-red-600 hover:text-red-800 flex items-center gap-1">
@@ -535,7 +631,7 @@ const TaxIntakeSystem = () => {
                               className="w-full px-3 py-2 border rounded-lg" />
                           </div>
                           <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">Donation Amount ($)</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1">Amount ($)</label>
                             <input type="number" step="0.01" placeholder="0.00"
                               value={donation.amount}
                               onChange={e => updateDonation(donation.id, "amount", e.target.value)}
@@ -565,8 +661,8 @@ const TaxIntakeSystem = () => {
           <div className="border-l-4 border-indigo-600 pl-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">5. Moving Expenses (Line 21900)</h2>
             <div className="bg-indigo-50 border-l-4 border-indigo-500 p-4 mb-4">
-              <p className="text-sm text-indigo-800 font-semibold mb-2">Did you move for work or school?</p>
-              <p className="text-xs text-indigo-700">You can claim moving expenses if your new home is at least 40 kilometers closer to your new workplace or school.</p>
+              <p className="text-sm text-indigo-800 font-semibold mb-1">Did you move for work or school?</p>
+              <p className="text-xs text-indigo-700">You can claim moving expenses if your new home is at least 40 km closer to your new workplace or school.</p>
             </div>
             <div className="mb-4">
               <label className="block text-sm font-semibold text-gray-700 mb-1">Did you have moving expenses in 2025?</label>
@@ -596,15 +692,13 @@ const TaxIntakeSystem = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">Old Home Address</label>
-                      <textarea rows={2} placeholder="Street, City, Province"
-                        value={formData.oldHomeAddress}
+                      <textarea rows={2} value={formData.oldHomeAddress}
                         onChange={e => handleChange("oldHomeAddress", e.target.value)}
                         className="w-full px-3 py-2 border rounded-lg" />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">New Home Address</label>
-                      <textarea rows={2} placeholder="Street, City, Province"
-                        value={formData.newHomeAddress}
+                      <textarea rows={2} value={formData.newHomeAddress}
                         onChange={e => handleChange("newHomeAddress", e.target.value)}
                         className="w-full px-3 py-2 border rounded-lg" />
                     </div>
@@ -615,15 +709,13 @@ const TaxIntakeSystem = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">Old Work/School Address</label>
-                      <textarea rows={2} placeholder="Street, City, Province"
-                        value={formData.oldWorkSchoolAddress}
+                      <textarea rows={2} value={formData.oldWorkSchoolAddress}
                         onChange={e => handleChange("oldWorkSchoolAddress", e.target.value)}
                         className="w-full px-3 py-2 border rounded-lg" />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">New Work/School Address</label>
-                      <textarea rows={2} placeholder="Street, City, Province"
-                        value={formData.newWorkSchoolAddress}
+                      <textarea rows={2} value={formData.newWorkSchoolAddress}
                         onChange={e => handleChange("newWorkSchoolAddress", e.target.value)}
                         className="w-full px-3 py-2 border rounded-lg" />
                     </div>
@@ -646,18 +738,17 @@ const TaxIntakeSystem = () => {
                 </div>
                 <div className="pt-4 border-t border-indigo-300">
                   <h3 className="font-semibold text-gray-800 mb-3">Eligible Moving Expenses</h3>
-                  <p className="text-xs text-gray-600 mb-4">Enter total amounts paid. Keep all receipts in case CRA asks.</p>
                   <div className="space-y-3">
                     {[
-                      { key: "movingTransportStorage", label: "Transportation & Storage Costs", hint: "Movers, truck rental, packing, insurance" },
+                      { key: "movingTransportStorage", label: "Transportation & Storage", hint: "Movers, truck rental, packing, insurance" },
                       { key: "movingTravelVehicle", label: "Travel - Vehicle Expenses", hint: "Gas, maintenance for moving trip" },
                       { key: "movingTravelMeals", label: "Travel - Meals", hint: "Meals during moving trip" },
                       { key: "movingAccommodation", label: "Travel - Accommodation", hint: "Hotels during moving trip" },
-                      { key: "movingTempLiving", label: "Temporary Living Expenses (Max 15 days)", hint: "Hotel, meals near new location" },
+                      { key: "movingTempLiving", label: "Temporary Living (Max 15 days)", hint: "Hotel, meals near new location" },
                       { key: "movingOldResidenceCosts", label: "Old Residence Costs", hint: "Lease cancellation, maintaining vacant home (max $5,000)" },
-                      { key: "movingRealEstateFees", label: "Real Estate Fees (Selling Old Home)", hint: "Agent commission, advertising costs" },
+                      { key: "movingRealEstateFees", label: "Real Estate Fees", hint: "Agent commission, advertising costs" },
                       { key: "movingLegalFees", label: "Legal Fees & Land Transfer Taxes", hint: "Legal fees for buying/selling" },
-                      { key: "movingOtherCosts", label: "Other Eligible Costs", hint: "Changing address on documents, utility hookups" },
+                      { key: "movingOtherCosts", label: "Other Eligible Costs", hint: "Address changes, utility hookups" },
                     ].map(item => (
                       <div key={item.key}>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -672,7 +763,7 @@ const TaxIntakeSystem = () => {
                     ))}
                     <div className="pt-4 border-t border-indigo-300">
                       <label className="block text-sm font-semibold text-gray-700 mb-1">
-                        Employer Reimbursement (if any)
+                        Employer Reimbursement
                         <span className="text-xs font-normal text-gray-500 block">Will be deducted from total</span>
                       </label>
                       <input type="number" step="0.01" placeholder="$0.00"
@@ -682,23 +773,49 @@ const TaxIntakeSystem = () => {
                     </div>
                   </div>
                   <div className="bg-indigo-100 p-4 rounded-lg border border-indigo-300 mt-4">
-                    <p className="text-sm font-semibold text-gray-800">Total Moving Expenses: ${movingTotal.toFixed(2)}</p>
+                    <p className="text-sm font-semibold">Total Moving Expenses: ${movingTotal.toFixed(2)}</p>
                     {parseFloat(formData.movingEmployerReimbursement || "0") > 0 && (
-                      <p className="text-sm text-gray-700 mt-1">Less Employer Reimbursement: -${parseFloat(formData.movingEmployerReimbursement || "0").toFixed(2)}</p>
+                      <p className="text-sm mt-1">Less Reimbursement: -${parseFloat(formData.movingEmployerReimbursement || "0").toFixed(2)}</p>
                     )}
-                    <p className="text-sm font-bold text-gray-800 mt-2 pt-2 border-t border-indigo-300">Net Claimable: ${movingNet.toFixed(2)}</p>
+                    <p className="text-sm font-bold mt-2 pt-2 border-t border-indigo-300">Net Claimable: ${movingNet.toFixed(2)}</p>
                   </div>
-                </div>
-                <div className="mt-4 bg-yellow-50 border-l-4 border-yellow-500 p-3">
-                  <p className="text-xs text-yellow-800"><strong>Important:</strong> NOT eligible: renovation costs, house-hunting trips, losses on home sale. Keep all receipts!</p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* SECTION 6 */}
+          {/* SECTION 6 - Upload Documents */}
           <div className="border-l-4 border-purple-600 pl-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">6. Upload Documents</h2>
+
+            {/* Dynamic highlighted message based on income selection */}
+            {requiredDocs.length > 0 ? (
+              <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-5">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="text-yellow-600 mt-0.5 shrink-0" size={20} />
+                  <div>
+                    <p className="text-sm font-bold text-yellow-800 mb-2">
+                      ⚠️ Based on your selected income sources, please upload the following documents:
+                    </p>
+                    <ul className="space-y-1">
+                      {requiredDocs.map((doc, i) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-yellow-800">
+                          <span className="w-2 h-2 bg-yellow-500 rounded-full shrink-0"></span>
+                          {doc}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-5">
+                <p className="text-sm text-blue-700">
+                  💡 Select your income sources in Section 2 to see which documents you need to upload.
+                </p>
+              </div>
+            )}
+
             <p className="text-sm text-gray-600 mb-4">Upload your tax documents (T4, T5, receipts, etc.). Max 5MB per file.</p>
             <div className="mb-4">
               <label className="flex items-center justify-center w-full p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 bg-gray-50">
@@ -769,4 +886,3 @@ const TaxIntakeSystem = () => {
 };
 
 export default TaxIntakeSystem;
-
