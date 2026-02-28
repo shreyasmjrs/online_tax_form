@@ -8,7 +8,9 @@ const TaxIntakeSystem = () => {
   const [loading, setLoading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [formData, setFormData] = useState({
-    name1: "", sin1: "", dob1: "", citizen1: "", maritalStatus: "",
+    firstName1: "", middleName1: "", lastName1: "",
+    email1: "", phone1: "",
+    sin1: "", dob1: "", citizen1: "", maritalStatus: "",
     name2: "", sin2: "", dob2: "", citizen2: "",
     marriedIn2025: "", marriageDate: "", address: "",
     dependents: [] as any[],
@@ -95,7 +97,8 @@ const TaxIntakeSystem = () => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
 
   const handleSubmit = async () => {
-    if (!formData.name1 || !formData.sin1 || !formData.dob1 || !formData.citizen1 ||
+    if (!formData.firstName1 || !formData.lastName1 || !formData.email1 || !formData.phone1 ||
+      !formData.sin1 || !formData.dob1 || !formData.citizen1 ||
       !formData.maritalStatus || !formData.address || !formData.hasSelfEmployed ||
       !formData.authorized || !formData.signature || !formData.signatureDate) {
       alert("Please fill all required fields marked with *"); return;
@@ -112,6 +115,7 @@ const TaxIntakeSystem = () => {
       const submissionData = { ...formData, documents: uploadedFiles, submittedAt: new Date().toISOString() };
       await fetch(APPS_SCRIPT_URL, {
         method: "POST",
+        mode: "no-cors",
         body: JSON.stringify(submissionData),
       });
       setSubmitted(true);
@@ -157,49 +161,99 @@ const TaxIntakeSystem = () => {
           <div className="border-l-4 border-blue-600 pl-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4">1. Personal &amp; Spouse Information</h2>
             <div className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
+
+              {/* Name Fields */}
+              <div className="grid md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Full Legal Name *</label>
-                  <input type="text" value={formData.name1} onChange={e => handleChange("name1", e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">First Name *</label>
+                  <input type="text" value={formData.firstName1}
+                    onChange={e => handleChange("firstName1", e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Social Insurance Number *</label>
-                  <input type="text" placeholder="123456789" maxLength={9} value={formData.sin1} onChange={e => handleSINChange("sin1", e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
-                  {formData.sin1 && formData.sin1.length !== 9 && <p className="text-red-500 text-xs mt-1">SIN must be exactly 9 digits</p>}
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Middle Name</label>
+                  <input type="text" value={formData.middleName1}
+                    onChange={e => handleChange("middleName1", e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Last Name *</label>
+                  <input type="text" value={formData.lastName1}
+                    onChange={e => handleChange("lastName1", e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                 </div>
               </div>
+
+              {/* Email and Phone */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Date of Birth *</label>
-                  <input type="date" value={formData.dob1} onChange={e => handleChange("dob1", e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Email Address *</label>
+                  <input type="email" placeholder="example@email.com"
+                    value={formData.email1}
+                    onChange={e => handleChange("email1", e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number *</label>
+                  <input type="tel" placeholder="416-123-4567"
+                    value={formData.phone1}
+                    onChange={e => handleChange("phone1", e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+
+              {/* SIN and DOB */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Social Insurance Number *</label>
+                  <input type="text" placeholder="123456789" maxLength={9}
+                    value={formData.sin1}
+                    onChange={e => handleSINChange("sin1", e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                  {formData.sin1 && formData.sin1.length !== 9 && <p className="text-red-500 text-xs mt-1">SIN must be exactly 9 digits</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Date of Birth *</label>
+                  <input type="date" value={formData.dob1}
+                    onChange={e => handleChange("dob1", e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Canadian Citizen? *</label>
-                  <select value={formData.citizen1} onChange={e => handleChange("citizen1", e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                  <select value={formData.citizen1}
+                    onChange={e => handleChange("citizen1", e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
                     <option value="">Select...</option>
                     <option value="yes">Yes</option>
                     <option value="no">No</option>
                   </select>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Marital Status *</label>
-                <select value={formData.maritalStatus} onChange={e => handleMaritalStatusChange(e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                  <option value="">Select...</option>
-                  <option value="single">Single</option>
-                  <option value="married">Married</option>
-                  <option value="common-law">Common-Law</option>
-                  <option value="divorced">Divorced</option>
-                  <option value="separated">Separated</option>
-                  <option value="widowed">Widowed</option>
-                </select>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Marital Status *</label>
+                  <select value={formData.maritalStatus}
+                    onChange={e => handleMaritalStatusChange(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">Select...</option>
+                    <option value="single">Single</option>
+                    <option value="married">Married</option>
+                    <option value="common-law">Common-Law</option>
+                    <option value="divorced">Divorced</option>
+                    <option value="separated">Separated</option>
+                    <option value="widowed">Widowed</option>
+                  </select>
+                </div>
               </div>
 
               {needsSpouseInfo() && (
                 <>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Did you get married/enter common-law in 2025?</label>
-                    <select value={formData.marriedIn2025} onChange={e => handleChange("marriedIn2025", e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <select value={formData.marriedIn2025}
+                      onChange={e => handleChange("marriedIn2025", e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
                       <option value="">Select...</option>
                       <option value="yes">Yes</option>
                       <option value="no">No</option>
@@ -208,7 +262,9 @@ const TaxIntakeSystem = () => {
                   {formData.marriedIn2025 === "yes" && (
                     <div className="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-300">
                       <label className="block text-sm font-semibold text-gray-700 mb-1">Marriage/Common-Law Start Date *</label>
-                      <input type="date" value={formData.marriageDate} onChange={e => handleChange("marriageDate", e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-500" />
+                      <input type="date" value={formData.marriageDate}
+                        onChange={e => handleChange("marriageDate", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-500" />
                       <p className="text-xs text-gray-600 mt-1">Please provide the exact date you got married or entered common-law in 2025</p>
                     </div>
                   )}
@@ -217,22 +273,31 @@ const TaxIntakeSystem = () => {
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Spouse Full Name *</label>
-                        <input type="text" value={formData.name2} onChange={e => handleChange("name2", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                        <input type="text" value={formData.name2}
+                          onChange={e => handleChange("name2", e.target.value)}
+                          className="w-full px-3 py-2 border rounded-lg" />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Spouse SIN *</label>
-                        <input type="text" placeholder="123456789" maxLength={9} value={formData.sin2} onChange={e => handleSINChange("sin2", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                        <input type="text" placeholder="123456789" maxLength={9}
+                          value={formData.sin2}
+                          onChange={e => handleSINChange("sin2", e.target.value)}
+                          className="w-full px-3 py-2 border rounded-lg" />
                         {formData.sin2 && formData.sin2.length !== 9 && <p className="text-red-500 text-xs mt-1">SIN must be exactly 9 digits</p>}
                       </div>
                     </div>
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Spouse DOB *</label>
-                        <input type="date" value={formData.dob2} onChange={e => handleChange("dob2", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                        <input type="date" value={formData.dob2}
+                          onChange={e => handleChange("dob2", e.target.value)}
+                          className="w-full px-3 py-2 border rounded-lg" />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">Spouse Canadian Citizen? *</label>
-                        <select value={formData.citizen2} onChange={e => handleChange("citizen2", e.target.value)} className="w-full px-3 py-2 border rounded-lg">
+                        <select value={formData.citizen2}
+                          onChange={e => handleChange("citizen2", e.target.value)}
+                          className="w-full px-3 py-2 border rounded-lg">
                           <option value="">Select...</option>
                           <option value="yes">Yes</option>
                           <option value="no">No</option>
@@ -245,9 +310,13 @@ const TaxIntakeSystem = () => {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Current Address *</label>
-                <textarea rows={2} placeholder="Street, City, Province, Postal Code" value={formData.address} onChange={e => handleChange("address", e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                <textarea rows={2} placeholder="Street, City, Province, Postal Code"
+                  value={formData.address}
+                  onChange={e => handleChange("address", e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
               </div>
 
+              {/* Dependents */}
               <div className="mt-6 pt-6 border-t-2 border-gray-200">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-semibold text-gray-800">👶 Dependents (Children or other dependents)</h3>
@@ -266,22 +335,31 @@ const TaxIntakeSystem = () => {
                         <div className="grid md:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">Full Legal Name</label>
-                            <input type="text" value={dep.name} onChange={e => updateDependent(dep.id, "name", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                            <input type="text" value={dep.name}
+                              onChange={e => updateDependent(dep.id, "name", e.target.value)}
+                              className="w-full px-3 py-2 border rounded-lg" />
                           </div>
                           <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">Social Insurance Number</label>
-                            <input type="text" placeholder="123456789" maxLength={9} value={dep.sin} onChange={e => updateDependent(dep.id, "sin", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                            <input type="text" placeholder="123456789" maxLength={9}
+                              value={dep.sin}
+                              onChange={e => updateDependent(dep.id, "sin", e.target.value)}
+                              className="w-full px-3 py-2 border rounded-lg" />
                             {dep.sin && dep.sin.length !== 9 && <p className="text-red-500 text-xs mt-1">SIN must be exactly 9 digits</p>}
                           </div>
                         </div>
                         <div className="grid md:grid-cols-2 gap-4 mt-4">
                           <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">Date of Birth</label>
-                            <input type="date" value={dep.dob} onChange={e => updateDependent(dep.id, "dob", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                            <input type="date" value={dep.dob}
+                              onChange={e => updateDependent(dep.id, "dob", e.target.value)}
+                              className="w-full px-3 py-2 border rounded-lg" />
                           </div>
                           <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">Relationship</label>
-                            <select value={dep.relationship} onChange={e => updateDependent(dep.id, "relationship", e.target.value)} className="w-full px-3 py-2 border rounded-lg">
+                            <select value={dep.relationship}
+                              onChange={e => updateDependent(dep.id, "relationship", e.target.value)}
+                              className="w-full px-3 py-2 border rounded-lg">
                               <option value="">Select...</option>
                               <option value="child">Child</option>
                               <option value="stepchild">Stepchild</option>
@@ -312,12 +390,16 @@ const TaxIntakeSystem = () => {
                 { key: "incomeOther", label: "Other" },
               ].map(item => (
                 <label key={item.key} className="flex items-center gap-2">
-                  <input type="checkbox" checked={(formData as any)[item.key]} onChange={e => handleChange(item.key, e.target.checked)} className="w-5 h-5" />
+                  <input type="checkbox" checked={(formData as any)[item.key]}
+                    onChange={e => handleChange(item.key, e.target.checked)} className="w-5 h-5" />
                   <span>{item.label}</span>
                 </label>
               ))}
               {formData.incomeOther && (
-                <input type="text" placeholder="Please specify..." value={formData.incomeOtherText} onChange={e => handleChange("incomeOtherText", e.target.value)} className="w-full px-3 py-2 border rounded-lg ml-7" />
+                <input type="text" placeholder="Please specify..."
+                  value={formData.incomeOtherText}
+                  onChange={e => handleChange("incomeOtherText", e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg ml-7" />
               )}
             </div>
           </div>
@@ -327,7 +409,9 @@ const TaxIntakeSystem = () => {
             <h2 className="text-xl font-bold text-gray-800 mb-4">3. Self-Employed Worksheet</h2>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Do you have self-employed or Uber/Lyft income? *</label>
-              <select value={formData.hasSelfEmployed} onChange={e => handleChange("hasSelfEmployed", e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+              <select value={formData.hasSelfEmployed}
+                onChange={e => handleChange("hasSelfEmployed", e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
                 <option value="">Select...</option>
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
@@ -338,31 +422,43 @@ const TaxIntakeSystem = () => {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Total Gross Income</label>
-                    <input type="number" step="0.01" value={formData.grossIncome} onChange={e => handleChange("grossIncome", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                    <input type="number" step="0.01" value={formData.grossIncome}
+                      onChange={e => handleChange("grossIncome", e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg" />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Platform Fees</label>
-                    <input type="number" step="0.01" value={formData.platformFees} onChange={e => handleChange("platformFees", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                    <input type="number" step="0.01" value={formData.platformFees}
+                      onChange={e => handleChange("platformFees", e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg" />
                   </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Total KM Driven</label>
-                    <input type="number" value={formData.totalKm} onChange={e => handleChange("totalKm", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                    <input type="number" value={formData.totalKm}
+                      onChange={e => handleChange("totalKm", e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg" />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Business KM</label>
-                    <input type="number" value={formData.businessKm} onChange={e => handleChange("businessKm", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                    <input type="number" value={formData.businessKm}
+                      onChange={e => handleChange("businessKm", e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg" />
                   </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Gas/Fuel</label>
-                    <input type="number" step="0.01" value={formData.gasFuel} onChange={e => handleChange("gasFuel", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                    <input type="number" step="0.01" value={formData.gasFuel}
+                      onChange={e => handleChange("gasFuel", e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg" />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Repairs/Maintenance</label>
-                    <input type="number" step="0.01" value={formData.repairs} onChange={e => handleChange("repairs", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                    <input type="number" step="0.01" value={formData.repairs}
+                      onChange={e => handleChange("repairs", e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg" />
                   </div>
                 </div>
               </div>
@@ -376,26 +472,37 @@ const TaxIntakeSystem = () => {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Rent Paid (Total 2025)</label>
-                  <input type="number" step="0.01" value={formData.rentPaid} onChange={e => handleChange("rentPaid", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                  <input type="number" step="0.01" value={formData.rentPaid}
+                    onChange={e => handleChange("rentPaid", e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Landlord Name</label>
-                  <input type="text" value={formData.landlord} onChange={e => handleChange("landlord", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                  <input type="text" value={formData.landlord}
+                    onChange={e => handleChange("landlord", e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Medical Expenses (Family Total)</label>
-                <input type="number" step="0.01" value={formData.medicalExpenses} onChange={e => handleChange("medicalExpenses", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                <input type="number" step="0.01" value={formData.medicalExpenses}
+                  onChange={e => handleChange("medicalExpenses", e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Childcare Expenses</label>
-                <input type="number" step="0.01" value={formData.childcareExpenses} onChange={e => handleChange("childcareExpenses", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                <input type="number" step="0.01" value={formData.childcareExpenses}
+                  onChange={e => handleChange("childcareExpenses", e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">RRSP Contributions</label>
-                <input type="number" step="0.01" value={formData.rrsp} onChange={e => handleChange("rrsp", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                <input type="number" step="0.01" value={formData.rrsp}
+                  onChange={e => handleChange("rrsp", e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg" />
               </div>
 
+              {/* Donations */}
               <div className="mt-8 pt-6 border-t-2 border-orange-300">
                 <div className="flex justify-between items-center mb-4">
                   <div>
@@ -422,15 +529,23 @@ const TaxIntakeSystem = () => {
                         <div className="grid md:grid-cols-3 gap-4">
                           <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">Charity Name</label>
-                            <input type="text" placeholder="e.g., Canadian Red Cross" value={donation.charityName} onChange={e => updateDonation(donation.id, "charityName", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                            <input type="text" placeholder="e.g., Canadian Red Cross"
+                              value={donation.charityName}
+                              onChange={e => updateDonation(donation.id, "charityName", e.target.value)}
+                              className="w-full px-3 py-2 border rounded-lg" />
                           </div>
                           <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">Donation Amount ($)</label>
-                            <input type="number" step="0.01" placeholder="0.00" value={donation.amount} onChange={e => updateDonation(donation.id, "amount", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                            <input type="number" step="0.01" placeholder="0.00"
+                              value={donation.amount}
+                              onChange={e => updateDonation(donation.id, "amount", e.target.value)}
+                              className="w-full px-3 py-2 border rounded-lg" />
                           </div>
                           <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">Donation Date</label>
-                            <input type="date" value={donation.donationDate} onChange={e => updateDonation(donation.id, "donationDate", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                            <input type="date" value={donation.donationDate}
+                              onChange={e => updateDonation(donation.id, "donationDate", e.target.value)}
+                              className="w-full px-3 py-2 border rounded-lg" />
                           </div>
                         </div>
                       </div>
@@ -455,7 +570,9 @@ const TaxIntakeSystem = () => {
             </div>
             <div className="mb-4">
               <label className="block text-sm font-semibold text-gray-700 mb-1">Did you have moving expenses in 2025?</label>
-              <select value={formData.hasMovingExpenses} onChange={e => handleChange("hasMovingExpenses", e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+              <select value={formData.hasMovingExpenses}
+                onChange={e => handleChange("hasMovingExpenses", e.target.value)}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
                 <option value="">Select...</option>
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
@@ -465,7 +582,9 @@ const TaxIntakeSystem = () => {
               <div className="space-y-4 bg-indigo-50 p-6 rounded-lg border-2 border-indigo-200">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Reason for Move</label>
-                  <select value={formData.movingReason} onChange={e => handleChange("movingReason", e.target.value)} className="w-full px-3 py-2 border rounded-lg">
+                  <select value={formData.movingReason}
+                    onChange={e => handleChange("movingReason", e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg">
                     <option value="">Select...</option>
                     <option value="new-job">New Job/Employment</option>
                     <option value="job-transfer">Job Transfer</option>
@@ -477,11 +596,17 @@ const TaxIntakeSystem = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">Old Home Address</label>
-                      <textarea rows={2} placeholder="Street, City, Province" value={formData.oldHomeAddress} onChange={e => handleChange("oldHomeAddress", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                      <textarea rows={2} placeholder="Street, City, Province"
+                        value={formData.oldHomeAddress}
+                        onChange={e => handleChange("oldHomeAddress", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg" />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">New Home Address</label>
-                      <textarea rows={2} placeholder="Street, City, Province" value={formData.newHomeAddress} onChange={e => handleChange("newHomeAddress", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                      <textarea rows={2} placeholder="Street, City, Province"
+                        value={formData.newHomeAddress}
+                        onChange={e => handleChange("newHomeAddress", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg" />
                     </div>
                   </div>
                 </div>
@@ -490,22 +615,33 @@ const TaxIntakeSystem = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">Old Work/School Address</label>
-                      <textarea rows={2} placeholder="Street, City, Province" value={formData.oldWorkSchoolAddress} onChange={e => handleChange("oldWorkSchoolAddress", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                      <textarea rows={2} placeholder="Street, City, Province"
+                        value={formData.oldWorkSchoolAddress}
+                        onChange={e => handleChange("oldWorkSchoolAddress", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg" />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">New Work/School Address</label>
-                      <textarea rows={2} placeholder="Street, City, Province" value={formData.newWorkSchoolAddress} onChange={e => handleChange("newWorkSchoolAddress", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                      <textarea rows={2} placeholder="Street, City, Province"
+                        value={formData.newWorkSchoolAddress}
+                        onChange={e => handleChange("newWorkSchoolAddress", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg" />
                     </div>
                   </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Move Date</label>
-                    <input type="date" value={formData.moveDate} onChange={e => handleChange("moveDate", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                    <input type="date" value={formData.moveDate}
+                      onChange={e => handleChange("moveDate", e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg" />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Distance Moved (KM)</label>
-                    <input type="number" placeholder="Must be at least 40 km" value={formData.distanceMoved} onChange={e => handleChange("distanceMoved", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                    <input type="number" placeholder="Must be at least 40 km"
+                      value={formData.distanceMoved}
+                      onChange={e => handleChange("distanceMoved", e.target.value)}
+                      className="w-full px-3 py-2 border rounded-lg" />
                   </div>
                 </div>
                 <div className="pt-4 border-t border-indigo-300">
@@ -528,7 +664,10 @@ const TaxIntakeSystem = () => {
                           {item.label}
                           <span className="text-xs font-normal text-gray-500 block">{item.hint}</span>
                         </label>
-                        <input type="number" step="0.01" placeholder="$0.00" value={(formData as any)[item.key]} onChange={e => handleChange(item.key, e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                        <input type="number" step="0.01" placeholder="$0.00"
+                          value={(formData as any)[item.key]}
+                          onChange={e => handleChange(item.key, e.target.value)}
+                          className="w-full px-3 py-2 border rounded-lg" />
                       </div>
                     ))}
                     <div className="pt-4 border-t border-indigo-300">
@@ -536,7 +675,10 @@ const TaxIntakeSystem = () => {
                         Employer Reimbursement (if any)
                         <span className="text-xs font-normal text-gray-500 block">Will be deducted from total</span>
                       </label>
-                      <input type="number" step="0.01" placeholder="$0.00" value={formData.movingEmployerReimbursement} onChange={e => handleChange("movingEmployerReimbursement", e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
+                      <input type="number" step="0.01" placeholder="$0.00"
+                        value={formData.movingEmployerReimbursement}
+                        onChange={e => handleChange("movingEmployerReimbursement", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg" />
                     </div>
                   </div>
                   <div className="bg-indigo-100 p-4 rounded-lg border border-indigo-300 mt-4">
@@ -590,22 +732,28 @@ const TaxIntakeSystem = () => {
             <h2 className="text-xl font-bold text-gray-800 mb-4">7. Authorization</h2>
             <div className="space-y-4">
               <label className="flex items-start gap-2">
-                <input type="checkbox" checked={formData.authorized} onChange={e => handleChange("authorized", e.target.checked)} className="w-5 h-5 mt-1" />
+                <input type="checkbox" checked={formData.authorized}
+                  onChange={e => handleChange("authorized", e.target.checked)} className="w-5 h-5 mt-1" />
                 <span className="text-sm">I authorize the tax preparer to represent me with the CRA for 2025.</span>
               </label>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Signature (Type your full name) *</label>
-                <input type="text" value={formData.signature} onChange={e => handleChange("signature", e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                <input type="text" value={formData.signature}
+                  onChange={e => handleChange("signature", e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Today's Date *</label>
-                <input type="date" value={formData.signatureDate} onChange={e => handleChange("signatureDate", e.target.value)} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                <input type="date" value={formData.signatureDate}
+                  onChange={e => handleChange("signatureDate", e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
               </div>
             </div>
           </div>
 
           <div className="pt-6">
-            <button onClick={handleSubmit} disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 flex items-center justify-center gap-2 disabled:bg-gray-400">
+            <button onClick={handleSubmit} disabled={loading}
+              className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 flex items-center justify-center gap-2 disabled:bg-gray-400">
               {loading ? (
                 <><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> Submitting...</>
               ) : (
@@ -621,3 +769,4 @@ const TaxIntakeSystem = () => {
 };
 
 export default TaxIntakeSystem;
+
