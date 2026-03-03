@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Send, CheckCircle, Upload, FileText, Trash2, AlertCircle } from "lucide-react";
 
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQ8BVOexUwmyq3-Bdd1rbKFfYVk4KskR4IkoBUlI_SQ6qPhIljs_YfsI1geRhkeP01/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOP7BC3SS2RndjWlsNFXFjcmJYSuNJkbHr6k0JP33U9vhA14t35hUKTuxaykhHmjU2/exec";
 
 const PROVINCES = [
   "Alberta", "British Columbia", "Manitoba", "New Brunswick",
